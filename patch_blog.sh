@@ -1,0 +1,1 @@
+sed -i 's/<Heart className={`w-5 h-5 md:w-6 md:h-6 ${isLiked ? '"'"'fill-current'"'"' : '"'"''"'"'}`} \/>/<motion.div animate={{ scale: isLiked ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}><Heart className={`w-5 h-5 md:w-6 md:h-6 ${isLiked ? '"'"'fill-current text-[#FF6B00]'"'"' : '"'"''"'"'}`} \/><\/motion.div>/g' src/pages/BlogDetail.tsx

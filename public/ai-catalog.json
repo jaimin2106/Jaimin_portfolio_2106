@@ -1,0 +1,54 @@
+{
+  "entries": [
+    {
+      "@context": "https://agenticresourcediscovery.org/context/v1",
+      "@id": "urn:air:jaiminumaraniya.me:person:jaimin-umaraniya",
+      "identifier": "urn:air:jaiminumaraniya.me:person:jaimin-umaraniya",
+      "displayName": "Jaimin Umaraniya — Full-Stack Developer & AI Engineer",
+      "type": "text/html",
+      "url": "https://jaiminumaraniya.me/",
+      "description": "Professional portfolio and contact resource for Jaimin Umaraniya, a Full-Stack Developer and AI Engineer specializing in React, Next.js, TypeScript, Node.js, Firebase, SaaS architecture, and AI-powered web applications.",
+      "capabilities": [
+        "FullStackDevelopment",
+        "AIEngineering",
+        "ReactDevelopment",
+        "NextjsDevelopment",
+        "TypeScriptDevelopment",
+        "SaaSArchitecture",
+        "TechnicalSEO"
+      ],
+      "tags": [
+        "full-stack development",
+        "AI engineering",
+        "React",
+        "Next.js",
+        "TypeScript",
+        "Node.js",
+        "Firebase",
+        "SaaS"
+      ],
+      "representativeQueries": [
+        "Find a full-stack developer who builds React and Next.js applications.",
+        "Who can build an AI-powered SaaS product using TypeScript and Node.js?",
+        "Find a developer in Ahmedabad, India with Firebase and technical SEO experience."
+      ],
+      "metadata": {
+        "entityType": "Person",
+        "canonicalName": "Jaimin Umaraniya",
+        "givenName": "Jaimin",
+        "familyName": "Umaraniya",
+        "alternateNames": [
+          "jaimin2106",
+          "Jaimin Umaraniya"
+        ],
+        "jobTitle": "Full-Stack Developer & AI Engineer",
+        "location": "Ahmedabad, Gujarat, India",
+        "sameAs": [
+          "https://github.com/jaimin2106",
+          "https://linkedin.com/in/jaimin2106"
+        ],
+        "machineReadableProfile": "https://jaiminumaraniya.me/llms-full.txt"
+      }
+    }
+  ]
+}

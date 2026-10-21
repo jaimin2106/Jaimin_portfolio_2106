@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "User with access to the CMS",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["Super Admin", "Admin", "Editor"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Setting": {
+      "title": "Global Setting",
+      "description": "Global Settings for the portfolio",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "contactEmail": { "type": "string" }
+      }
+    },
+    "Hero": {
+      "title": "Hero Content",
+      "description": "Content for the homepage hero section",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "headline": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "description": { "type": "string" },
+        "heroImage": { "type": "string" }
+      }
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Portfolio Projects",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "content": { "type": "string" },
+        "status": { "type": "string", "enum": ["Draft", "Published"] },
+        "featured": { "type": "boolean" },
+        "thumbnail": { "type": "string" }
+      },
+      "required": ["title", "slug", "status"]
+    },
+    "Blog": {
+      "title": "Blog Post",
+      "description": "Blog posts and articles",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "content": { "type": "string" },
+        "status": { "type": "string", "enum": ["Draft", "Published"] }
+      },
+      "required": ["title", "slug", "status"]
+    },
+    "FeaturedProject": {
+      "title": "Featured Project Reference",
+      "description": "Points to a featured project",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Admins with access to the CMS"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Global settings configuration"
+    },
+    "/hero/main": {
+      "schema": { "$ref": "#/entities/Hero" },
+      "description": "Hero section content. Singleton document 'main'"
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Project items"
+    },
+    "/blogs/{blogId}": {
+      "schema": { "$ref": "#/entities/Blog" },
+      "description": "Blog posts"
+    },
+    "/featuredProject/main": {
+      "schema": { "$ref": "#/entities/FeaturedProject" },
+      "description": "Singleton storing the featured project ID"
+    }
+  }
+}

@@ -1,0 +1,138 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+
+# -----------------------------------------------------------------
+# DOMAIN MIGRATION: Permanent 301 redirect from old Netlify subdomain
+# to the new custom domain. REQUIRED by Google Search Console
+# "Change of Address" validation. The 'force = true' ensures this
+# fires even if a matching file exists in the publish directory.
+# -----------------------------------------------------------------
+[[redirects]]
+  from   = "https://portfoliojaimin.netlify.app/*"
+  to     = "https://jaiminumaraniya.me/:splat"
+  status = 301
+  force  = true
+# ─── Static SEO files: explicit pass-through BEFORE the SPA fallback ───────────
+# These rules guarantee that Googlebot always receives the real static file,
+# never the React index.html shell — even if a future build has a glitch.
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/llms.txt"
+  to = "/llms.txt"
+  status = 200
+  force = true
+
+[[redirects]]
+from = "/llms-full.txt"
+to = "/llms-full.txt"
+status = 200
+force = true
+
+[[redirects]]
+from = "/ai-catalog.json"
+to = "/ai-catalog.json"
+status = 200
+force = true
+
+[[redirects]]
+from = "/.well-known/ai-catalog.json"
+to = "/.well-known/ai-catalog.json"
+status = 200
+force = true
+
+[[redirects]]
+from = "/.well-known/ard.json"
+to = "/.well-known/ard.json"
+status = 200
+force = true
+
+# ─── SPA fallback — must come LAST so static files are matched first ──────────
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ─── Security headers for all routes ─────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# ─── Immutable caching for Vite-hashed assets ────────────────────────────────
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ─── Image caching (7 days + revalidate) ─────────────────────────────────────
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+[[headers]]
+  for = "/*.jpeg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+[[headers]]
+  for = "/*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+# ─── SEO file caching (1 hour so updates propagate quickly) ──────────────────
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+
+
+
+# --- Content Security Policy --------------------------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.google-analytics.com https://*.firebaseio.com wss://*.firebaseio.com; frame-ancestors 'none';"

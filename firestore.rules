@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: authenticated admin check ──────────────────────────────────
+    function isAdmin() {
+      return request.auth != null && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'umaraniyajaimin5@gmail.com'
+      );
+    }
+
+    // ── Public content collections ─────────────────────────────────────────
+    // Only PUBLISHED documents may be read by unauthenticated visitors.
+    // Drafts and any document without status == "Published" must stay private.
+
+    match /projects/{projectId} {
+      // Public can read only Published projects
+      allow read: if resource.data.status == 'Published';
+      // Admin can read everything (drafts etc.)
+      allow read: if isAdmin();
+      // Public can update only likes/views — no other fields
+      allow update: if !isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'views']);
+      allow write: if isAdmin();
+    }
+
+    match /blogs/{blogId} {
+      // Public can read only Published blog posts
+      allow read: if resource.data.status == 'Published';
+      // Admin can read everything
+      allow read: if isAdmin();
+      // Public can update only likes/views
+      allow update: if !isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'views']);
+      allow write: if isAdmin();
+    }
+
+    // ── Semi-public collections (homepage / display data only) ─────────────
+    // These contain no secrets — only display fields.
+    match /hero/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /stats/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /capabilities/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /faqs/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /testimonials/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Media: asset URLs are public (needed for image resolution).
+    // Only non-sensitive keys (size, url, name, contentType, etc.) are stored.
+    match /media/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── PRIVATE: settings contain API keys, build hooks, GSC tokens ────────
+    // MUST be admin-only. Never expose to public.
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── PRIVATE: admin list — never expose publicly ────────────────────────
+    match /admins/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Messages: public can submit contact forms, admin can manage ─────────
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Featured project (homepage spotlight) ─────────────────────────────
+    match /featuredProject/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Catch-all: everything else is admin-only ───────────────────────────
+    // This prevents accidental public exposure of any new collection.
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
