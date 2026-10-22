@@ -38,7 +38,7 @@ export default function Blog() {
       className="min-h-screen bg-white"
     >
       <SEO
-        title="Blog | Technical Articles & Thoughts"
+        title="Blog | Technical Articles & Thoughts | Jaimin Umaraniya"
         description="Read my latest technical articles, engineering deep-dives, and thoughts on AI, web development, and software architecture."
         keywords={["Technical Blog", "Web Development Articles", "Software Engineering Insights", "AI Development Blog", "Frontend Architecture", "Full Stack Developer Blog"]}
         schema={[

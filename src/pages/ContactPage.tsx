@@ -34,16 +34,19 @@ export default function ContactPage() {
 
   const services = ["Frontend Development", "Full Stack Development", "UI/UX Design", "Consulting"];
 
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : `https://example.com/contact`;
+  const currentUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}`
+    : "https://jaiminumaraniya.me/contact";
 
   const contactSchema = {
-    "@context": "https://schema.org",
     "@type": "ContactPage",
+    "@id": `${currentUrl}#contact`,
     "name": "Contact Jaimin Umaraniya - Consulting & Engineering",
     "description": "Contact Jaimin Umaraniya for Full Stack Development, UI/UX Design, and Engineering Consultation.",
     "url": currentUrl,
     "mainEntity": {
       "@type": "Person",
+      "@id": "https://jaiminumaraniya.me/#person",
       "name": "Jaimin Umaraniya",
       "email": "umaraniyajaimin5@gmail.com",
       "address": {
@@ -62,12 +65,10 @@ export default function ContactPage() {
       transition={{ duration: 0.5 }}
       className="pt-24 md:pt-32 pb-16 md:pb-24"
     >
-      <script type="application/ld+json">
-        {JSON.stringify(contactSchema)}
-      </script>
       <SEO
         title="Contact Jaimin Umaraniya"
         description="I'm currently available for freelance work and open to full-time opportunities. Drop a message to discuss your next project."
+        schema={contactSchema}
       />
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 mb-24">
@@ -265,5 +266,4 @@ export default function ContactPage() {
     </motion.main>
   );
 }
-
 

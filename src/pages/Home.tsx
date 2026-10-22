@@ -54,30 +54,6 @@ export default function Home() {
         keywords={["Jaimin Umaraniya", "Jaimin Portfolio", "Portfolio Jaimin", "Jaimin Full Stack Developer", "Jaimin Software Engineer", "React Developer Portfolio", "Next.js Developer", "TypeScript Developer", "Frontend Developer India", "Full Stack Developer Ahmedabad", "Software Engineer Ahmedabad", "Firebase Developer", "AI Developer", "Modern Developer Portfolio", "React Portfolio", "Next.js Portfolio", "Web Developer Portfolio", "JavaScript Developer", "Software Engineer Portfolio", "Portfolio Website"]}
         schema={[
           {
-            "@type": "Person",
-            "@id": "https://jaiminumaraniya.me/#person",
-            "name": "Jaimin Umaraniya",
-            "givenName": "Jaimin",
-            "familyName": "Umaraniya",
-            "alternateName": ["jaimin2106", "Jaimin Umaraniya"],
-            "identifier": "urn:air:jaiminumaraniya.me:person:jaimin-umaraniya",
-            "jobTitle": "Full-Stack Developer & AI Engineer",
-            "description": "Jaimin Umaraniya is a Full-Stack Developer and AI Engineer specializing in React, Next.js, Node.js, AI-powered applications, SaaS architecture, technical SEO, and high-performance web experiences.",
-            "url": "https://jaiminumaraniya.me",
-            "image": "https://jaiminumaraniya.me/OG.jpg",
-            "address": {
-              "@type": "PostalAddress",
-              "addressLocality": "Ahmedabad",
-              "addressRegion": "Gujarat",
-              "addressCountry": "IN"
-            },
-            "knowsAbout": ["React", "Next.js", "TypeScript", "Firebase", "Node.js", "AI Engineering", "Web Performance", "Full Stack Development"],
-            "sameAs": [
-              "https://github.com/jaimin2106",
-              "https://linkedin.com/in/jaimin2106"
-            ]
-          },
-          {
             "@type": "WebPage",
             "@id": "https://jaiminumaraniya.me/#webpage",
             "url": "https://jaiminumaraniya.me",

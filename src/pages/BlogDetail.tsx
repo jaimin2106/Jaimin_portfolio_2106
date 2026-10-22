@@ -20,6 +20,23 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 
 const CANONICAL_DOMAIN = "https://jaiminumaraniya.me";
 
+function toIsoDate(value: unknown): string | undefined {
+  let date: Date | undefined;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "string" || typeof value === "number") {
+    date = new Date(value);
+  } else if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof value.toDate === "function"
+  ) {
+    date = value.toDate();
+  }
+  return date && !Number.isNaN(date.getTime()) ? date.toISOString() : undefined;
+}
+
 gsap.registerPlugin(ScrollTrigger);
 
 // Custom code block with copy button and horizontal scroll
@@ -108,11 +125,11 @@ export default function BlogDetail() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const { data: post, isLoading: loadingPost } = useQuery({
+  const { data: post, isLoading: loadingPost, isError } = useQuery({
     queryKey: ["public_blog", id],
     queryFn: async () => {
       if (!id) return null;
-      return api.getBlogBySlug(id);
+      return (await api.getBlogBySlug(id)) || api.getBlogById(id);
     },
     enabled: !!id,
     staleTime: STALE_TIMES.projects,
@@ -160,6 +177,15 @@ export default function BlogDetail() {
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
   if (loading) return <BlogDetailSkeleton />;
+  if (isError) {
+    return (
+      <main className="pt-32 text-center min-h-screen flex flex-col justify-center items-center">
+        <SEO title="Article temporarily unavailable" description="Article details could not be loaded. Please try again shortly." noindex />
+        <h1 className="text-2xl font-bold">Article temporarily unavailable</h1>
+        <p className="mt-3 text-gray-500">There was a problem loading this article. Please try again.</p>
+      </main>
+    );
+  }
   if (!post)
     return (
       <div className="pt-32 text-center h-screen font-display text-2xl font-bold flex items-center justify-center">
@@ -171,6 +197,8 @@ export default function BlogDetail() {
   const pageTitle = post.seoTitle || post.title;
   const pageDescription = post.seoDescription || post.excerpt || "";
   const slug = (post.slug || id || '').toLowerCase();
+  const publishedTime = toIsoDate(post.createdAt || post.publishedAt);
+  const modifiedTime = toIsoDate(post.updatedAt || post.modifiedAt) || publishedTime;
   // Use pregenerated og-image (set at build time by prerender.js) â€” must be a crawlable HTTPS URL
   // Data URIs (base64) stored in Firebase cannot be read by WhatsApp/Twitter/LinkedIn crawlers
   const rawImage = post.ogImage || post.seoImage || post.image;
@@ -183,25 +211,15 @@ export default function BlogDetail() {
   const articleSchema = {
     "@type": "BlogPosting",
     "@id": `${canonicalUrl}#article`,
-    "headline": pageTitle,
+    "headline": post.title,
     "description": pageDescription,
     "image": pageImage ? [pageImage] : [],
-    "datePublished": post.createdAt ? new Date(post.createdAt.seconds * 1000).toISOString() : undefined,
-    "dateModified": post.updatedAt ? new Date(post.updatedAt.seconds * 1000).toISOString() : undefined,
-    "author": {
-      "@type": "Person",
-      "@id": `${CANONICAL_DOMAIN}/#person`,
-      "name": post.authorName || "Jaimin Umaraniya",
-      "url": CANONICAL_DOMAIN,
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Jaimin Umaraniya",
-      "logo": {
-        "@type": "ImageObject",
-        "url": `${CANONICAL_DOMAIN}/favicon.ico`,
-      },
-    },
+    ...(publishedTime && { "datePublished": publishedTime }),
+    ...(modifiedTime && { "dateModified": modifiedTime }),
+    "author": post.authorName && post.authorName !== "Jaimin Umaraniya"
+      ? { "@type": "Person", "name": post.authorName }
+      : { "@id": `${CANONICAL_DOMAIN}/#person` },
+    "publisher": { "@id": `${CANONICAL_DOMAIN}/#person` },
     "mainEntityOfPage": {
       "@type": "WebPage",
       "@id": canonicalUrl,
@@ -252,8 +270,8 @@ export default function BlogDetail() {
           ogImageAlt={pageTitle}
           type="article"
           author={post.authorName || "Jaimin Umaraniya"}
-          publishedTime={post.createdAt ? new Date(post.createdAt.seconds * 1000).toISOString() : undefined}
-          modifiedTime={post.updatedAt ? new Date(post.updatedAt.seconds * 1000).toISOString() : undefined}
+          publishedTime={publishedTime}
+          modifiedTime={modifiedTime}
           readingTime={post.readTime}
           category={post.category}
           tags={tags}
@@ -653,4 +671,3 @@ export default function BlogDetail() {
     </>
   );
 }
-

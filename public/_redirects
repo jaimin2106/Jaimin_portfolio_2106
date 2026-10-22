@@ -12,5 +12,16 @@ https://portfoliojaimin.netlify.app/* https://jaiminumaraniya.me/:splat 301!
 /.well-known/ai-catalog.json  /.well-known/ai-catalog.json  200!
 /.well-known/ard.json  /.well-known/ard.json  200!
 
-# 3. SPA fallback — catch-all, must be last
-/*    /index.html   200
+# Utility and admin routes remain functional but use a noindex app shell.
+/admin        /admin.html  200
+/admin/*      /admin.html  200
+/login        /admin.html  200
+/seed         /admin.html  200
+/style-guide  /admin.html  200
+
+# Existing static detail files take precedence; unknown slugs are true 404s.
+/projects/*   /404.html   404
+/blog/*       /404.html   404
+
+# Do not turn arbitrary unknown paths into indexable homepage shells.
+/*            /404.html   404

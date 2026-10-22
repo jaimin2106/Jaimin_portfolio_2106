@@ -107,7 +107,7 @@ export default function ProjectDetail() {
     return () => handlers.forEach((cleanup) => cleanup());
   });
 
-  const { data: project, isLoading: loadingProject } = useQuery({
+  const { data: project, isLoading: loadingProject, isError } = useQuery({
     queryKey: ["public_project", id],
     queryFn: async () => {
       if (!id) return null;
@@ -159,12 +159,24 @@ export default function ProjectDetail() {
       </div>
     );
 
+  if (isError) {
+    return (
+      <main className="pt-32 text-center min-h-screen flex flex-col justify-center items-center">
+        <SEO title="Project temporarily unavailable" description="Project details could not be loaded. Please try again shortly." noindex />
+        <h1 className="text-2xl font-bold">Project temporarily unavailable</h1>
+        <p className="mt-3 text-gray-500">There was a problem loading this project. Please try again.</p>
+      </main>
+    );
+  }
+
   if (!project) return <NotFound />;
 
   // SSR-safe canonical URL
-  const canonicalUrl = `${CANONICAL_DOMAIN}/projects/`;
+  const canonicalUrl = `${CANONICAL_DOMAIN}/projects/${project.slug || project.id}`;
   const pageTitle = project.seoTitle || project.title;
   const pageDescription = project.seoDescription || project.shortDescription || project.subtitle || project.description || "";
+  const createdAtDate = project.createdAt?.toDate?.()
+    ?? (project.createdAt ? new Date(project.createdAt) : undefined);
   // Use pregenerated og-image (HTTPS) â€” base64 data URIs cannot be crawled by WhatsApp/Twitter
   const rawImage = project.thumbnail || project.featuredImage || project.heroImage || project.image;
   const seoImage = (rawImage && !rawImage.startsWith('data:'))
@@ -176,7 +188,7 @@ export default function ProjectDetail() {
   const projectSchema = {
     "@type": "SoftwareApplication",
     "@id": `${canonicalUrl}#software`,
-    "name": pageTitle,
+    "name": project.title,
     "description": pageDescription,
     "applicationCategory": project.category || "WebApplication",
     "programmingLanguage": techTags.join(", "),
@@ -188,7 +200,7 @@ export default function ProjectDetail() {
       "name": "Jaimin Umaraniya",
     },
     ...(seoImage && { "image": seoImage }),
-    ...(project.createdAt && { "dateCreated": new Date(project.createdAt.seconds * 1000).toISOString() }),
+    ...(createdAtDate && !Number.isNaN(createdAtDate.getTime()) && { "dateCreated": createdAtDate.toISOString() }),
   };
 
   const breadcrumbSchema = {
@@ -215,7 +227,7 @@ export default function ProjectDetail() {
           keywords={keywords.length > 0 ? keywords : undefined}
           ogImage={seoImage}
           ogImageAlt={pageTitle}
-          type="article"
+          type="website"
           schema={[projectSchema, breadcrumbSchema]}
         />
 
@@ -593,9 +605,6 @@ export default function ProjectDetail() {
     </>
   );
 }
-
-
-
 
 
 

@@ -64,7 +64,7 @@ export default function SEO({
   const finalTwitterHandle = twitterHandle || "@jaimin_dev";
 
   const canonicalPath = location.pathname.replace(/\/$/, '') || '/';
-  const currentUrl = `${CANONICAL_DOMAIN}${canonicalPath}`;
+  const currentUrl = `${CANONICAL_DOMAIN}${canonicalPath === '/' ? '/' : canonicalPath}`;
 
   const SUFFIX = ` | ${SITE_NAME}`;
   const fullTitle = !title
@@ -74,37 +74,61 @@ export default function SEO({
       : `${title}${SUFFIX}`;
 
   const isBase64 = finalOgImage?.startsWith('data:');
-  const safeOgImage = isBase64 ? '/OG.jpg' : (finalOgImage || '/OG.jpg');
-  const absoluteOgImage = safeOgImage.startsWith('http')
+  const safeOgImage = isBase64 || finalOgImage?.startsWith('http://') ? '/OG.jpg' : (finalOgImage || '/OG.jpg');
+  const absoluteOgImage = safeOgImage.startsWith('https://')
     ? safeOgImage
     : `${CANONICAL_DOMAIN}${safeOgImage.startsWith('/') ? '' : '/'}${safeOgImage}`;
 
   const imageAlt = ogImageAlt || fullTitle;
 
+  const pageId = `${currentUrl}#webpage`;
   const baseSchema: any = {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "Person",
+        "@id": `${CANONICAL_DOMAIN}/#person`,
+        "name": SITE_NAME,
+        "url": CANONICAL_DOMAIN,
+        "image": `${CANONICAL_DOMAIN}/OG.jpg`,
+        "jobTitle": "Full-Stack Developer & AI Engineer",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Ahmedabad",
+          "addressRegion": "Gujarat",
+          "addressCountry": "IN"
+        },
+        "knowsAbout": ["React", "Next.js", "TypeScript", "Firebase", "Node.js", "AI Engineering", "Web Performance", "Full Stack Development"],
+        "sameAs": [
+          "https://github.com/jaimin2106",
+          "https://linkedin.com/in/jaimin2106"
+        ]
+      },
       {
         "@type": "WebSite",
         "@id": `${CANONICAL_DOMAIN}/#website`,
         "url": CANONICAL_DOMAIN,
         "name": SITE_NAME,
         "description": "Full-Stack Developer & AI Engineer Portfolio",
-        "publisher": {
-          "@type": "Person",
-          "@id": `${CANONICAL_DOMAIN}/#person`,
-          "name": SITE_NAME
-        }
+        "publisher": { "@id": `${CANONICAL_DOMAIN}/#person` }
       }
     ] as any[]
   };
 
+  const extraSchemas = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
+  if (!extraSchemas.some((entry) => entry["@id"] === pageId)) {
+    baseSchema["@graph"].push({
+      "@type": "WebPage",
+      "@id": pageId,
+      "url": currentUrl,
+      "name": fullTitle,
+      "description": finalDescription,
+      "isPartOf": { "@id": `${CANONICAL_DOMAIN}/#website` }
+    });
+  }
+
   if (schema) {
-    if (Array.isArray(schema)) {
-      baseSchema["@graph"].push(...schema);
-    } else {
-      baseSchema["@graph"].push(schema);
-    }
+    baseSchema["@graph"].push(...extraSchemas);
   }
 
   return (
@@ -172,7 +196,7 @@ export default function SEO({
 
       {/* Structured Data */}
       <script type="application/ld+json">
-        {JSON.stringify(baseSchema)}
+        {JSON.stringify(baseSchema).replace(/</g, '\\u003c')}
       </script>
     </Helmet>
   );

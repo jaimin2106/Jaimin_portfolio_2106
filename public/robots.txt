@@ -1,6 +1,4 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /admin/*
 
 Sitemap: https://jaiminumaraniya.me/sitemap.xml

@@ -44,17 +44,20 @@ export const api = {
   
   async getProjectById(id: string) {
     const docSnap = await getDoc(doc(db, "projects", id));
-    if (docSnap.exists()) {
+    if (docSnap.exists() && docSnap.data().status === "Published") {
       return await this.resolveObjectAssets({ id: docSnap.id, ...docSnap.data() }, ["image", "seoImage", "thumbnail", "featuredImage"]);
     }
     return null;
   },
 
   async getProjectBySlug(slug: string) {
-    const q = query(collection(db, "projects"), where("slug", "==", slug));
+    const q = query(collection(db, "projects"), where("status", "==", "Published"));
     const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      return await this.resolveObjectAssets({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() }, ["image", "seoImage", "thumbnail", "featuredImage"]);
+    const match = snapshot.docs.find(document =>
+      document.id === slug || document.data().slug === slug
+    );
+    if (match) {
+      return await this.resolveObjectAssets({ id: match.id, ...match.data() }, ["image", "seoImage", "thumbnail", "featuredImage"]);
     }
     return null;
   },
@@ -72,17 +75,20 @@ export const api = {
 
   async getBlogById(id: string) {
     const docSnap = await getDoc(doc(db, "blogs", id));
-    if (docSnap.exists()) {
+    if (docSnap.exists() && docSnap.data().status === "Published") {
       return await this.resolveObjectAssets({ id: docSnap.id, ...docSnap.data() }, ["image", "seoImage"]);
     }
     return null;
   },
 
   async getBlogBySlug(slug: string) {
-    const q = query(collection(db, "blogs"), where("slug", "==", slug));
+    const q = query(collection(db, "blogs"), where("status", "==", "Published"));
     const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      return await this.resolveObjectAssets({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() }, ["image", "seoImage"]);
+    const match = snapshot.docs.find(document =>
+      document.id === slug || document.data().slug === slug
+    );
+    if (match) {
+      return await this.resolveObjectAssets({ id: match.id, ...match.data() }, ["image", "seoImage"]);
     }
     return null;
   },
@@ -190,4 +196,3 @@ export const api = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 };
-

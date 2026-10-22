@@ -71,12 +71,6 @@ to = "/.well-known/ard.json"
 status = 200
 force = true
 
-# ─── SPA fallback — must come LAST so static files are matched first ──────────
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
 # ─── Security headers for all routes ─────────────────────────────────────────
 [[headers]]
   for = "/*"
