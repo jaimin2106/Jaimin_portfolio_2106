@@ -2,8 +2,6 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 
-<<<<<<< HEAD
-=======
 import {
   APP_SHELL_FILE,
   CANONICAL_ORIGIN,
@@ -218,7 +216,6 @@ function safeImageUrl(baseUrl: string, type: 'blog' | 'project', id: string, ...
   return `${baseUrl}/OG.jpg`;
 }
 
->>>>>>> eeea694 (canonical issue fix)
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -347,8 +344,6 @@ app.get("/manifest.json", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 app.get("/sitemap.xml", async (req, res) => {
   const baseUrl = getCanonicalOrigin();
   const today = new Date().toISOString().split('T')[0];
@@ -428,7 +423,6 @@ ${routes
   res.send(sitemap);
 });
 
->>>>>>> eeea694 (canonical issue fix)
 app.get("/llms.txt", async (req, res) => {
   const baseUrl = getBaseUrl(req);
   const today = new Date().toISOString().split('T')[0];
@@ -1530,43 +1524,6 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-<<<<<<< HEAD
-
-    app.get("*", (req, res, next) => {
-      const pathname = req.path;
-      if (/\.[a-zA-Z0-9]+$/.test(pathname)) return next();
-
-      const route = pathname.replace(/\/+$/, "") || "/";
-      if (pathname !== route && route !== "/") {
-        return res.redirect(301, route);
-      }
-
-      if (route === "/admin" || route.startsWith("/admin/") || ["/login", "/seed", "/style-guide"].includes(route)) {
-        return res.sendFile(path.join(distPath, "admin.html"));
-      }
-
-      const routeFiles: Record<string, string> = {
-        "/": "index.html",
-        "/projects": "projects.html",
-        "/blog": "blog.html",
-        "/contact": "contact.html",
-        "/privacy-policy": "privacy-policy.html",
-        "/refund-policy": "refund-policy.html",
-      };
-      if (routeFiles[route]) return res.sendFile(path.join(distPath, routeFiles[route]));
-
-      const detailMatch = route.match(/^\/(projects|blog)\/([a-z0-9]+(?:-[a-z0-9]+)*)$/);
-      if (detailMatch) {
-        const filePath = path.join(distPath, detailMatch[1], `${detailMatch[2]}.html`);
-        if (fs.existsSync(filePath)) return res.sendFile(filePath);
-        return res.status(404).sendFile(path.join(distPath, "404.html"));
-      }
-
-      return res.status(404).sendFile(path.join(distPath, "404.html"));
-    });
-
-    app.use(express.static(distPath));
-=======
 
     // Route -> prerendered file map, produced by scripts/prerender.js
     const manifestPath = path.join(distPath, "route-manifest.json");
@@ -1635,7 +1592,6 @@ async function startServer() {
       }
       return res.send("Not Found");
     });
->>>>>>> eeea694 (canonical issue fix)
 
     // Static assets (hashed JS/CSS, images, robots.txt, sitemap.xml, ...)
     app.use(express.static(distPath, { redirect: false, index: false }));

@@ -166,8 +166,6 @@ to = "/.well-known/ard.json"
 status = 200
 force = true
 
-<<<<<<< HEAD
-=======
 # ─── SPA fallback — a real 404 for every unknown route ─────────────────────
 # The prerendered 404 page carries NO canonical and `noindex, nofollow`, so an
 # unknown URL can never inherit the homepage's canonical. Existing static
@@ -178,8 +176,6 @@ force = true
   to = "/404.html"
   status = 404
 
-
->>>>>>> eeea694 (canonical issue fix)
 # ─── Security headers for all routes ─────────────────────────────────────────
 [[headers]]
   for = "/*"

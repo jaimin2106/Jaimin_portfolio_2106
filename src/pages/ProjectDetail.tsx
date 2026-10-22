@@ -173,22 +173,16 @@ export default function ProjectDetail() {
 
   if (!project) return <NotFound />;
 
-<<<<<<< HEAD
-  // SSR-safe canonical URL
-  const canonicalUrl = `${CANONICAL_DOMAIN}/projects/${project.slug || project.id}`;
-  const pageTitle = project.seoTitle || project.title;
-  const pageDescription = project.seoDescription || project.shortDescription || project.subtitle || project.description || "";
-  const createdAtDate = project.createdAt?.toDate?.()
-    ?? (project.createdAt ? new Date(project.createdAt) : undefined);
-  // Use pregenerated og-image (HTTPS) â€” base64 data URIs cannot be crawled by WhatsApp/Twitter
-=======
   // SSR-safe canonical URL — the CONTENT SLUG, never the Firestore doc id
   const projectSlug = project.slug || project.id;
   const canonicalUrl = `${CANONICAL_DOMAIN}/projects/${projectSlug}`;
   const pageTitle = project.seoTitle || project.title;
   const pageDescription = project.seoDescription || project.shortDescription || project.subtitle || project.description || "";
+  const createdAtDate = project.createdAt?.toDate?.()
+    ?? (project.createdAt?.seconds
+      ? new Date(project.createdAt.seconds * 1000)
+      : project.createdAt ? new Date(project.createdAt) : undefined);
   // Use pregenerated og-image (HTTPS) — base64 data URIs cannot be crawled by WhatsApp/Twitter
->>>>>>> eeea694 (canonical issue fix)
   const rawImage = project.thumbnail || project.featuredImage || project.heroImage || project.image;
   const seoImage = (rawImage && !rawImage.startsWith('data:'))
     ? rawImage
@@ -200,7 +194,7 @@ export default function ProjectDetail() {
   const projectSchema = {
     "@type": "SoftwareApplication",
     "@id": `${canonicalUrl}#software`,
-    "name": project.title,
+    "name": pageTitle,
     "description": pageDescription,
     "applicationCategory": project.category || "WebApplication",
     "programmingLanguage": techTags.join(", "),
@@ -239,7 +233,7 @@ export default function ProjectDetail() {
           keywords={keywords.length > 0 ? keywords : undefined}
           ogImage={seoImage}
           ogImageAlt={pageTitle}
-          type="website"
+          type="article"
           schema={[projectSchema, breadcrumbSchema]}
         />
 

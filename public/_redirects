@@ -33,23 +33,12 @@ https://portfoliojaimin.netlify.app/* https://jaiminumaraniya.me/:splat 301!
 /.well-known/ai-catalog.json  /.well-known/ai-catalog.json  200!
 /.well-known/ard.json  /.well-known/ard.json  200!
 
-<<<<<<< HEAD
-# Utility and admin routes remain functional but use a noindex app shell.
-/admin        /admin.html  200
-/admin/*      /admin.html  200
-/login        /admin.html  200
-/seed         /admin.html  200
-/style-guide  /admin.html  200
-
-# Existing static detail files take precedence; unknown slugs are true 404s.
+# 6. Unknown detail slugs are true 404s (existing detail files win via the
+#    forced rules in section 2).
 /projects/*   /404.html   404
 /blog/*       /404.html   404
 
-# Do not turn arbitrary unknown paths into indexable homepage shells.
-/*            /404.html   404
-=======
-# 6. SPA fallback - a real 404 for every unknown route.
+# 7. SPA fallback - a real 404 for every unknown route.
 #    The prerendered 404 page has no canonical and `noindex, nofollow`.
 #    Existing static files are still served normally (no `!` force flag).
-/*    /404.html   404
->>>>>>> eeea694 (canonical issue fix)
+/*            /404.html   404

@@ -72,10 +72,6 @@ export default function SEO({
   const finalAuthor = author || settings.siteName || "Jaimin Umaraniya";
   const finalTwitterHandle = twitterHandle || "@jaimin_dev";
 
-<<<<<<< HEAD
-  const canonicalPath = location.pathname.replace(/\/$/, '') || '/';
-  const currentUrl = `${CANONICAL_DOMAIN}${canonicalPath === '/' ? '/' : canonicalPath}`;
-=======
   // The canonical URL is ALWAYS derived from the production origin, never from
   // the current host, so a preview deployment still advertises the canonical
   // production URL.
@@ -85,7 +81,6 @@ export default function SEO({
   // never claim a canonical URL.
   const isPrivate = noindex || isPrivatePath(location.pathname);
 
->>>>>>> eeea694 (canonical issue fix)
 
   const SUFFIX = ` | ${SITE_NAME}`;
   const fullTitle = !title
@@ -95,13 +90,8 @@ export default function SEO({
       : `${title}${SUFFIX}`;
 
   const isBase64 = finalOgImage?.startsWith('data:');
-<<<<<<< HEAD
-  const safeOgImage = isBase64 || finalOgImage?.startsWith('http://') ? '/OG.jpg' : (finalOgImage || '/OG.jpg');
+  const safeOgImage = isBase64 || finalOgImage?.startsWith('http://') ? DEFAULT_OG_IMAGE : (finalOgImage || DEFAULT_OG_IMAGE);
   const absoluteOgImage = safeOgImage.startsWith('https://')
-=======
-  const safeOgImage = isBase64 ? DEFAULT_OG_IMAGE : (finalOgImage || DEFAULT_OG_IMAGE);
-  const absoluteOgImage = safeOgImage.startsWith('http')
->>>>>>> eeea694 (canonical issue fix)
     ? safeOgImage
     : `${CANONICAL_ORIGIN}${safeOgImage.startsWith('/') ? '' : '/'}${safeOgImage}`;
 
@@ -113,10 +103,10 @@ export default function SEO({
     "@graph": [
       {
         "@type": "Person",
-        "@id": `${CANONICAL_DOMAIN}/#person`,
+        "@id": `${CANONICAL_ORIGIN}/#person`,
         "name": SITE_NAME,
-        "url": CANONICAL_DOMAIN,
-        "image": `${CANONICAL_DOMAIN}/OG.jpg`,
+        "url": CANONICAL_ORIGIN,
+        "image": `${CANONICAL_ORIGIN}/OG.jpg`,
         "jobTitle": "Full-Stack Developer & AI Engineer",
         "address": {
           "@type": "PostalAddress",
@@ -136,20 +126,15 @@ export default function SEO({
         "url": CANONICAL_ORIGIN,
         "name": SITE_NAME,
         "description": "Full-Stack Developer & AI Engineer Portfolio",
-<<<<<<< HEAD
-        "publisher": { "@id": `${CANONICAL_DOMAIN}/#person` }
-=======
         "publisher": {
           "@type": "Person",
           "@id": `${CANONICAL_ORIGIN}/#person`,
           "name": SITE_NAME
         }
->>>>>>> eeea694 (canonical issue fix)
       }
     ] as any[]
   };
 
-<<<<<<< HEAD
   const extraSchemas = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
   if (!extraSchemas.some((entry) => entry["@id"] === pageId)) {
     baseSchema["@graph"].push({
@@ -158,11 +143,9 @@ export default function SEO({
       "url": currentUrl,
       "name": fullTitle,
       "description": finalDescription,
-      "isPartOf": { "@id": `${CANONICAL_DOMAIN}/#website` }
+      "isPartOf": { "@id": `${CANONICAL_ORIGIN}/#website` }
     });
   }
-=======
->>>>>>> eeea694 (canonical issue fix)
 
   if (schema) {
     baseSchema["@graph"].push(...extraSchemas);
