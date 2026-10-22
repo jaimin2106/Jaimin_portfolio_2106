@@ -14,6 +14,101 @@
   to     = "https://jaiminumaraniya.me/:splat"
   status = 301
   force  = true
+# ─── Prerendered pages: one file per route, one canonical per page ───────────
+# Every rewrite below points at the HTML produced by scripts/prerender.js.
+# `force = true` guarantees the prerendered file always wins over Netlify's
+# directory handling (e.g. "/projects" vs. the "/projects/" directory) — this
+# is what previously made "/projects" fall back to the homepage shell and
+# therefore report the homepage canonical.
+
+# Collection + static pages
+[[redirects]]
+  from = "/projects"
+  to = "/projects.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog"
+  to = "/blog.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/privacy-policy"
+  to = "/privacy-policy.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/refund-policy"
+  to = "/refund-policy.html"
+  status = 200
+  force = true
+
+# Detail pages (prerendered per content slug)
+[[redirects]]
+  from = "/projects/:slug"
+  to = "/projects/:slug.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog/:slug"
+  to = "/blog/:slug.html"
+  status = 200
+  force = true
+
+# Private routes (admin / auth / tooling) — noindex, no canonical
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/app-shell.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/style-guide"
+  to = "/style-guide.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/seed"
+  to = "/seed.html"
+  status = 200
+  force = true
+
+# ─── Legacy URLs → permanent redirect to the canonical route ────────────────
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy-policy"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/refund"
+  to = "/refund-policy"
+  status = 301
+  force = true
+
 # ─── Static SEO files: explicit pass-through BEFORE the SPA fallback ───────────
 # These rules guarantee that Googlebot always receives the real static file,
 # never the React index.html shell — even if a future build has a glitch.
@@ -71,6 +166,20 @@ to = "/.well-known/ard.json"
 status = 200
 force = true
 
+<<<<<<< HEAD
+=======
+# ─── SPA fallback — a real 404 for every unknown route ─────────────────────
+# The prerendered 404 page carries NO canonical and `noindex, nofollow`, so an
+# unknown URL can never inherit the homepage's canonical. Existing static
+# files (assets, images, sitemap.xml, robots.txt, ...) are still served
+# normally because this rule does not use `force`.
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+
+>>>>>>> eeea694 (canonical issue fix)
 # ─── Security headers for all routes ─────────────────────────────────────────
 [[headers]]
   for = "/*"
@@ -130,3 +239,44 @@ force = true
   for = "/*"
   [headers.values]
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.google-analytics.com https://*.firebaseio.com wss://*.firebaseio.com; frame-ancestors 'none';"
+
+# --- Content-Type headers for JSON API / discovery files ---------------------
+# Without explicit Content-Type, Netlify may serve .json files without the
+# application/json header, which causes validators (ARD, manifest checkers)
+# to reject the response. X-Content-Type-Options: nosniff in the /*
+# rule above makes this mandatory - the browser/validator WILL NOT guess.
+[[headers]]
+  for = "/ai-catalog.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+
+[[headers]]
+  for = "/.well-known/ai-catalog.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+
+[[headers]]
+  for = "/.well-known/ard.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+
+[[headers]]
+  for = "/llms.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=3600, s-maxage=3600"
+
+[[headers]]
+  for = "/llms-full.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=3600, s-maxage=3600"

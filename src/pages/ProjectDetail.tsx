@@ -15,8 +15,10 @@ import { api } from "../services/api";
 import { QUERY_KEYS, STALE_TIMES } from "../lib/queryKeys";
 import { ProgressiveImage } from "../components/ui/progressive-image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
+import { CANONICAL_ORIGIN } from "../data/site-seo.js";
 
-const CANONICAL_DOMAIN = "https://jaiminumaraniya.me";
+const CANONICAL_DOMAIN = CANONICAL_ORIGIN;
+
 
 // Responsive table wrapper (used in legacy Markdown fallback)
 const ResponsiveTable = ({ children }: any) => (
@@ -171,6 +173,7 @@ export default function ProjectDetail() {
 
   if (!project) return <NotFound />;
 
+<<<<<<< HEAD
   // SSR-safe canonical URL
   const canonicalUrl = `${CANONICAL_DOMAIN}/projects/${project.slug || project.id}`;
   const pageTitle = project.seoTitle || project.title;
@@ -178,10 +181,19 @@ export default function ProjectDetail() {
   const createdAtDate = project.createdAt?.toDate?.()
     ?? (project.createdAt ? new Date(project.createdAt) : undefined);
   // Use pregenerated og-image (HTTPS) â€” base64 data URIs cannot be crawled by WhatsApp/Twitter
+=======
+  // SSR-safe canonical URL — the CONTENT SLUG, never the Firestore doc id
+  const projectSlug = project.slug || project.id;
+  const canonicalUrl = `${CANONICAL_DOMAIN}/projects/${projectSlug}`;
+  const pageTitle = project.seoTitle || project.title;
+  const pageDescription = project.seoDescription || project.shortDescription || project.subtitle || project.description || "";
+  // Use pregenerated og-image (HTTPS) — base64 data URIs cannot be crawled by WhatsApp/Twitter
+>>>>>>> eeea694 (canonical issue fix)
   const rawImage = project.thumbnail || project.featuredImage || project.heroImage || project.image;
   const seoImage = (rawImage && !rawImage.startsWith('data:'))
     ? rawImage
-    : `${CANONICAL_DOMAIN}/og-images/project-${id}.jpg`;
+    : `${CANONICAL_DOMAIN}/og-images/project-${projectSlug}.jpg`;
+
   const techTags = parseTags(project.techStack);
   const keywords = project.seoKeywords?.split(",").map((k: string) => k.trim()) || techTags;
 

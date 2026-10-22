@@ -1,7 +1,28 @@
 # 1. Redirect old Netlify URL to the new domain
 https://portfoliojaimin.netlify.app/* https://jaiminumaraniya.me/:splat 301!
 
-# 2. Static SEO files — must be listed BEFORE the SPA fallback
+# 2. Prerendered pages - one file per route, one canonical per page
+#    (must be listed BEFORE the catch-all)
+/projects          /projects.html          200!
+/blog              /blog.html              200!
+/contact           /contact.html           200!
+/privacy-policy    /privacy-policy.html    200!
+/refund-policy     /refund-policy.html     200!
+/projects/:slug    /projects/:slug.html    200!
+/blog/:slug        /blog/:slug.html        200!
+
+# 3. Private routes - noindex, no canonical
+/admin             /admin.html             200!
+/admin/*           /app-shell.html         200!
+/login             /login.html             200!
+/style-guide       /style-guide.html       200!
+/seed              /seed.html              200!
+
+# 4. Legacy URLs -> permanent redirect to the canonical route
+/privacy           /privacy-policy         301!
+/refund            /refund-policy          301!
+
+# 5. Static SEO files - must be listed BEFORE the catch-all
 /sitemap.xml    /sitemap.xml    200!
 /robots.txt     /robots.txt     200!
 /favicon.ico    /favicon.ico    200!
@@ -12,6 +33,7 @@ https://portfoliojaimin.netlify.app/* https://jaiminumaraniya.me/:splat 301!
 /.well-known/ai-catalog.json  /.well-known/ai-catalog.json  200!
 /.well-known/ard.json  /.well-known/ard.json  200!
 
+<<<<<<< HEAD
 # Utility and admin routes remain functional but use a noindex app shell.
 /admin        /admin.html  200
 /admin/*      /admin.html  200
@@ -25,3 +47,9 @@ https://portfoliojaimin.netlify.app/* https://jaiminumaraniya.me/:splat 301!
 
 # Do not turn arbitrary unknown paths into indexable homepage shells.
 /*            /404.html   404
+=======
+# 6. SPA fallback - a real 404 for every unknown route.
+#    The prerendered 404 page has no canonical and `noindex, nofollow`.
+#    Existing static files are still served normally (no `!` force flag).
+/*    /404.html   404
+>>>>>>> eeea694 (canonical issue fix)

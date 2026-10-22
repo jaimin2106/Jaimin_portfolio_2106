@@ -4,7 +4,7 @@
       "@context": "https://agenticresourcediscovery.org/context/v1",
       "@id": "urn:air:jaiminumaraniya.me:person:jaimin-umaraniya",
       "identifier": "urn:air:jaiminumaraniya.me:person:jaimin-umaraniya",
-      "displayName": "Jaimin Umaraniya — Full-Stack Developer & AI Engineer",
+      "displayName": "Jaimin Umaraniya - Full-Stack Developer & AI Engineer",
       "type": "text/html",
       "url": "https://jaiminumaraniya.me/",
       "description": "Professional portfolio and contact resource for Jaimin Umaraniya, a Full-Stack Developer and AI Engineer specializing in React, Next.js, TypeScript, Node.js, Firebase, SaaS architecture, and AI-powered web applications.",

@@ -2,6 +2,223 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 
+<<<<<<< HEAD
+=======
+import {
+  APP_SHELL_FILE,
+  CANONICAL_ORIGIN,
+  NOT_FOUND_FILE,
+  PUBLIC_ROUTES,
+  ROBOTS_INDEX,
+  buildHeadBlock,
+  buildSchemaGraph,
+  canonicalUrl,
+  isPrivatePath,
+  normalizePath,
+  replaceSeoBlock,
+} from "./src/data/site-seo.js";
+
+const PROJECT_ID = "astute-abbey-p1wkv";
+const DATABASE_ID = "ai-studio-72db9056-9c78-47ef-8e14-18be539b546c";
+
+async function getDocument(collection, id) {
+  try {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/${DATABASE_ID}/documents/${collection}/${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function parseFirestoreData(doc): any {
+  if (!doc || !doc.fields) return {};
+  const result = {};
+  for (const key in doc.fields) {
+    const val = doc.fields[key];
+    if (val.stringValue !== undefined) result[key] = val.stringValue;
+    else if (val.booleanValue !== undefined) result[key] = val.booleanValue;
+    else if (val.integerValue !== undefined) result[key] = parseInt(val.integerValue, 10);
+  }
+  return result;
+}
+
+/**
+ * Runs a Firestore structured query over the REST API.
+ *
+ * The plain `documents/{collection}` list endpoint requires credentials while
+ * `:runQuery` works with the public read rules, so every dynamic lookup goes
+ * through this helper.
+ */
+async function runQuery(
+  collectionId: string,
+  where?: { field: string; value: string },
+): Promise<any[]> {
+  try {
+    const body: any = {
+      structuredQuery: {
+        from: [{ collectionId }],
+      },
+    };
+    if (where) {
+      body.structuredQuery.where = {
+        fieldFilter: {
+          field: { fieldPath: where.field },
+          op: "EQUAL",
+          value: { stringValue: where.value },
+        },
+      };
+      body.structuredQuery.limit = 1;
+    }
+
+    const res = await fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    if (!Array.isArray(rows)) return [];
+    return rows.filter((row: any) => row && row.document).map((row: any) => row.document);
+  } catch (e) {
+    return [];
+  }
+}
+
+/** All documents of a collection. */
+async function listDocuments(collectionId: string): Promise<any[]> {
+  return runQuery(collectionId);
+}
+
+/**
+ * Resolves a document by slug first and falls back to the document id, so
+ * `/projects/formiz` and `/projects/forma-ai` resolve to the same project.
+ */
+async function getDocumentBySlug(collectionId: string, slug: string): Promise<any> {
+  const [bySlug] = await runQuery(collectionId, { field: "slug", value: slug });
+  if (bySlug) return bySlug;
+
+  const byId = await getDocument(collectionId, slug);
+  if (byId) return byId;
+
+  // Case-insensitive fallback (slugs are stored lowercase).
+  const all = await listDocuments(collectionId);
+  const match = all.find((doc: any) => {
+    const fields = doc.fields || {};
+    const id = doc.name.split("/").pop();
+    const candidate = fields.slug?.stringValue || id;
+    return String(candidate).toLowerCase() === String(slug).toLowerCase();
+  });
+  return match || null;
+}
+
+/**
+ * Renders a content route that was published AFTER the last build (so it is
+ * not part of the prerendered output) using the exact same head builder the
+ * prerenderer uses — one canonical, matching OG/Twitter tags, JSON-LD graph.
+ *
+ * Returns null when the route is not a content route or the content does not
+ * exist / is not published.
+ */
+async function renderDynamicRoute(
+  routePath: string,
+  distPath: string,
+): Promise<string | null> {
+  const projectMatch = routePath.match(/^\/projects\/([^/]+)$/);
+  const blogMatch = routePath.match(/^\/blog\/([^/]+)$/);
+  if (!projectMatch && !blogMatch) return null;
+
+  const isProject = Boolean(projectMatch);
+  const slug = String((projectMatch || blogMatch)![1]).toLowerCase();
+
+  const doc = await getDocumentBySlug(isProject ? "projects" : "blogs", slug);
+  if (!doc) return null;
+
+  const data = parseFirestoreData(doc);
+  if (data.status && data.status !== "Published") return null;
+
+  const baseHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf8");
+  const canonical = canonicalUrl(routePath);
+
+  const rawTitle = data.seoTitle || data.title || "Jaimin Umaraniya";
+  const title = isProject ? `${rawTitle} | Case Study` : `${rawTitle} | Technical Blog`;
+  const description =
+    data.seoDescription ||
+    data.shortDescription ||
+    data.subtitle ||
+    data.excerpt ||
+    "";
+
+  const image = safeImageUrl(
+    getCanonicalOrigin(),
+    isProject ? "project" : "blog",
+    slug,
+    data.seoImage,
+    data.ogImage,
+    data.thumbnail,
+    data.featuredImage,
+    data.image,
+  );
+
+  const breadcrumbs = isProject
+    ? [
+        { label: "Home", href: `${CANONICAL_ORIGIN}/` },
+        { label: "Projects", href: `${CANONICAL_ORIGIN}/projects` },
+        { label: rawTitle, href: canonical },
+      ]
+    : [
+        { label: "Home", href: `${CANONICAL_ORIGIN}/` },
+        { label: "Blog", href: `${CANONICAL_ORIGIN}/blog` },
+        { label: rawTitle, href: canonical },
+      ];
+
+  const headBlock = buildHeadBlock({
+    title,
+    description,
+    keywords: data.seoKeywords
+      ? String(data.seoKeywords).split(",").map((k: string) => k.trim()).filter(Boolean)
+      : null,
+    canonical,
+    ogImage: image,
+    ogImageAlt: rawTitle,
+    type: "article",
+    robots: ROBOTS_INDEX,
+    schema: buildSchemaGraph({
+      title,
+      description,
+      canonical,
+      schemaType: isProject ? "SoftwareApplication" : "BlogPosting",
+      image,
+      breadcrumbs,
+    }),
+  });
+
+  return replaceSeoBlock(baseHtml, headBlock);
+}
+
+/**
+ * Returns a crawlable HTTPS image URL. Rejects base64 data URIs.
+ * For blog/project pages, points to prerendered og-images files.
+ */
+function safeImageUrl(baseUrl: string, type: 'blog' | 'project', id: string, ...extras: string[]): string {
+  // First check if prerendered og-image file exists for this post
+  const distPath = path.join(process.cwd(), 'dist', 'og-images');
+  const fileName = `${type}-${id}.jpg`;
+  const filePath = path.join(distPath, fileName);
+  if (fs.existsSync(filePath)) {
+    return `${baseUrl}/og-images/${fileName}`;
+  }
+  // Fallback: use any provided HTTPS URL
+  for (const img of extras) {
+    if (img && typeof img === 'string' && (img.startsWith('https://') || img.startsWith('http://'))) {
+      return img;
+    }
+  }
+  return `${baseUrl}/OG.jpg`;
+}
+
+>>>>>>> eeea694 (canonical issue fix)
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -54,6 +271,14 @@ app.use((req, res, next) => {
 
 const FIRESTORE_BASE_URL =
   "https://firestore.googleapis.com/v1/projects/astute-abbey-p1wkv/databases/ai-studio-72db9056-9c78-47ef-8e14-18be539b546c/documents";
+
+/**
+ * Canonical origin used for every absolute URL the server emits (canonical
+ * links, og:url, sitemap, feeds). It is deliberately NOT derived from the
+ * request host: a preview deployment must still advertise the production
+ * canonical URLs, otherwise every route would emit a different canonical.
+ */
+const getCanonicalOrigin = () => CANONICAL_ORIGIN;
 
 // Helper to get dynamic base URL from request
 const getBaseUrl = (req: express.Request) => {
@@ -122,6 +347,88 @@ app.get("/manifest.json", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+app.get("/sitemap.xml", async (req, res) => {
+  const baseUrl = getCanonicalOrigin();
+  const today = new Date().toISOString().split('T')[0];
+
+  // Static routes come from the shared registry so the sitemap always matches
+  // the prerendered pages and their canonical URLs.
+  let routes: {
+    url: string;
+    changefreq: string;
+    priority: string;
+    lastmod?: string;
+  }[] = PUBLIC_ROUTES.map((route) => ({
+    url: route.path,
+    changefreq: route.changefreq,
+    priority: route.priority,
+    lastmod: today,
+  }));
+
+  try {
+    // Published projects — addressed by slug, exactly like the internal links.
+    const projects = await listDocuments("projects");
+    projects.forEach((doc: any) => {
+      const fields = doc.fields || {};
+      const id = doc.name.split("/").pop();
+      const status = fields.status?.stringValue;
+      if (status && status !== "Published") return;
+      const slug = String(fields.slug?.stringValue || id).toLowerCase();
+      if (!slug) return;
+      const updatedAt =
+        fields.updatedAt?.timestampValue || new Date().toISOString();
+      routes.push({
+        url: `/projects/${slug}`,
+        changefreq: "monthly",
+        priority: "0.7",
+        lastmod: updatedAt,
+      });
+    });
+
+    // Published blog posts only.
+    const blogs = await listDocuments("blogs");
+    blogs.forEach((doc: any) => {
+      const fields = doc.fields || {};
+      const id = doc.name.split("/").pop();
+      if (fields.status?.stringValue !== "Published") return;
+      const slug = String(fields.slug?.stringValue || id).toLowerCase();
+      if (!slug) return;
+      const updatedAt =
+        fields.updatedAt?.timestampValue || new Date().toISOString();
+      routes.push({
+        url: `/blog/${slug}`,
+        changefreq: "weekly",
+        priority: "0.8",
+        lastmod: updatedAt,
+      });
+    });
+  } catch (e) {
+    console.error("Sitemap error:", e);
+  }
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${routes
+  .map(
+    (route) => `  <url>
+    <loc>${baseUrl}${route.url}</loc>
+    ${route.lastmod ? `<lastmod>${new Date(route.lastmod).toISOString().split('T')[0]}</lastmod>` : ""}
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`,
+  )
+  .join("\n")}
+</urlset>`;
+
+  res.header("Content-Type", "application/xml; charset=utf-8");
+  res.send(sitemap);
+});
+
+>>>>>>> eeea694 (canonical issue fix)
 app.get("/llms.txt", async (req, res) => {
   const baseUrl = getBaseUrl(req);
   const today = new Date().toISOString().split('T')[0];
@@ -1223,6 +1530,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
+<<<<<<< HEAD
 
     app.get("*", (req, res, next) => {
       const pathname = req.path;
@@ -1258,7 +1566,79 @@ async function startServer() {
     });
 
     app.use(express.static(distPath));
+=======
 
+    // Route -> prerendered file map, produced by scripts/prerender.js
+    const manifestPath = path.join(distPath, "route-manifest.json");
+    let routeManifest: Record<string, string> = {};
+    if (fs.existsSync(manifestPath)) {
+      try {
+        routeManifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      } catch {
+        routeManifest = {};
+      }
+    }
+
+    /**
+     * Serves the prerendered HTML for a request.
+     *
+     * Every public route already owns a file with EXACTLY ONE absolute,
+     * self-referencing canonical URL, so the server never rewrites the head of
+     * a page (which is what used to produce a second, homepage canonical).
+     * Content published after the last build is rendered on the fly with the
+     * very same helpers the prerenderer uses.
+     */
+    app.get("*", async (req, res, next) => {
+      // Static assets are handled by express.static below.
+      if (req.path.startsWith("/api") || /\.[a-zA-Z0-9]+$/.test(req.path)) {
+        return next();
+      }
+
+      const routePath = normalizePath(req.path);
+
+      // 1. Prerendered page (public routes + private routes)
+      const prerendered = routeManifest[routePath];
+      if (prerendered) {
+        const filePath = path.join(distPath, prerendered);
+        if (fs.existsSync(filePath)) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          return res.sendFile(filePath);
+        }
+      }
+
+      // 2. Dynamic content route that was published after the last build
+      try {
+        const dynamic = await renderDynamicRoute(routePath, distPath);
+        if (dynamic) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          return res.send(dynamic);
+        }
+      } catch (error) {
+        console.error("Dynamic route render error:", error);
+      }
+
+      // 3. Private routes -> noindex shell (no canonical, never indexable)
+      if (isPrivatePath(routePath)) {
+        const shellPath = path.join(distPath, APP_SHELL_FILE);
+        if (fs.existsSync(shellPath)) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          return res.sendFile(shellPath);
+        }
+      }
+
+      // 4. Unknown route -> real 404
+      const notFoundPath = path.join(distPath, NOT_FOUND_FILE);
+      res.status(404);
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      if (fs.existsSync(notFoundPath)) {
+        return res.sendFile(notFoundPath);
+      }
+      return res.send("Not Found");
+    });
+>>>>>>> eeea694 (canonical issue fix)
+
+    // Static assets (hashed JS/CSS, images, robots.txt, sitemap.xml, ...)
+    app.use(express.static(distPath, { redirect: false, index: false }));
   }
 
   app.listen(PORT, "0.0.0.0", () => {

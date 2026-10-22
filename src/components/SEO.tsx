@@ -2,9 +2,18 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
+import {
+  CANONICAL_ORIGIN,
+  DEFAULT_KEYWORDS,
+  DEFAULT_OG_IMAGE,
+  ROBOTS_INDEX,
+  ROBOTS_NOINDEX,
+  canonicalUrl,
+  isPrivatePath,
+} from '../data/site-seo.js';
 
-const CANONICAL_DOMAIN = 'https://jaiminumaraniya.me';
 const SITE_NAME = 'Jaimin Umaraniya';
+
 
 interface SEOProps {
   title?: string;
@@ -57,14 +66,26 @@ export default function SEO({
   const finalKeywords = keywords
     || (settings.seoKeywords
       ? settings.seoKeywords.split(',').map((k: string) => k.trim())
-      : ["Jaimin Umaraniya", "Full-Stack Developer", "AI Engineer", "React", "Next.js", "Node.js", "TypeScript", "SaaS Architecture", "Technical SEO"]);
+      : DEFAULT_KEYWORDS);
 
-  const finalOgImage = ogImage || settings.ogImage || "/OG.jpg";
+  const finalOgImage = ogImage || settings.ogImage || DEFAULT_OG_IMAGE;
   const finalAuthor = author || settings.siteName || "Jaimin Umaraniya";
   const finalTwitterHandle = twitterHandle || "@jaimin_dev";
 
+<<<<<<< HEAD
   const canonicalPath = location.pathname.replace(/\/$/, '') || '/';
   const currentUrl = `${CANONICAL_DOMAIN}${canonicalPath === '/' ? '/' : canonicalPath}`;
+=======
+  // The canonical URL is ALWAYS derived from the production origin, never from
+  // the current host, so a preview deployment still advertises the canonical
+  // production URL.
+  const currentUrl = canonicalUrl(location.pathname);
+
+  // Private routes (admin / auth / tooling) must never be indexable and must
+  // never claim a canonical URL.
+  const isPrivate = noindex || isPrivatePath(location.pathname);
+
+>>>>>>> eeea694 (canonical issue fix)
 
   const SUFFIX = ` | ${SITE_NAME}`;
   const fullTitle = !title
@@ -74,10 +95,15 @@ export default function SEO({
       : `${title}${SUFFIX}`;
 
   const isBase64 = finalOgImage?.startsWith('data:');
+<<<<<<< HEAD
   const safeOgImage = isBase64 || finalOgImage?.startsWith('http://') ? '/OG.jpg' : (finalOgImage || '/OG.jpg');
   const absoluteOgImage = safeOgImage.startsWith('https://')
+=======
+  const safeOgImage = isBase64 ? DEFAULT_OG_IMAGE : (finalOgImage || DEFAULT_OG_IMAGE);
+  const absoluteOgImage = safeOgImage.startsWith('http')
+>>>>>>> eeea694 (canonical issue fix)
     ? safeOgImage
-    : `${CANONICAL_DOMAIN}${safeOgImage.startsWith('/') ? '' : '/'}${safeOgImage}`;
+    : `${CANONICAL_ORIGIN}${safeOgImage.startsWith('/') ? '' : '/'}${safeOgImage}`;
 
   const imageAlt = ogImageAlt || fullTitle;
 
@@ -106,15 +132,24 @@ export default function SEO({
       },
       {
         "@type": "WebSite",
-        "@id": `${CANONICAL_DOMAIN}/#website`,
-        "url": CANONICAL_DOMAIN,
+        "@id": `${CANONICAL_ORIGIN}/#website`,
+        "url": CANONICAL_ORIGIN,
         "name": SITE_NAME,
         "description": "Full-Stack Developer & AI Engineer Portfolio",
+<<<<<<< HEAD
         "publisher": { "@id": `${CANONICAL_DOMAIN}/#person` }
+=======
+        "publisher": {
+          "@type": "Person",
+          "@id": `${CANONICAL_ORIGIN}/#person`,
+          "name": SITE_NAME
+        }
+>>>>>>> eeea694 (canonical issue fix)
       }
     ] as any[]
   };
 
+<<<<<<< HEAD
   const extraSchemas = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
   if (!extraSchemas.some((entry) => entry["@id"] === pageId)) {
     baseSchema["@graph"].push({
@@ -126,6 +161,8 @@ export default function SEO({
       "isPartOf": { "@id": `${CANONICAL_DOMAIN}/#website` }
     });
   }
+=======
+>>>>>>> eeea694 (canonical issue fix)
 
   if (schema) {
     baseSchema["@graph"].push(...extraSchemas);
@@ -141,41 +178,42 @@ export default function SEO({
       <meta name="theme-color" content="#E85D04" />
       <meta
         name="robots"
-        content={
-          noindex
-            ? "noindex,nofollow"
-            : "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
-        }
+        content={isPrivate ? ROBOTS_NOINDEX : ROBOTS_INDEX}
       />
 
-      <link rel="canonical" href={currentUrl} />
+      {/* Private routes never claim a canonical URL */}
+      {!isPrivate && <link rel="canonical" href={currentUrl} />}
+
 
       {/* Open Graph */}
-      <meta property="og:type" content={type} />
-      <meta property="og:url" content={currentUrl} />
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={finalDescription} />
-      <meta property="og:image" content={absoluteOgImage} />
-      <meta property="og:image:width" content={String(ogImageWidth)} />
-      <meta property="og:image:height" content={String(ogImageHeight)} />
-      <meta property="og:image:alt" content={imageAlt} />
-      <meta property="og:image:type" content="image/jpeg" />
-      <meta property="og:site_name" content={SITE_NAME} />
-      <meta property="og:locale" content="en_US" />
+      {!isPrivate && <>
+        <meta property="og:type" content={type} />
+        <meta property="og:url" content={currentUrl} />
+        <meta property="og:title" content={fullTitle} />
+        <meta property="og:description" content={finalDescription} />
+        <meta property="og:image" content={absoluteOgImage} />
+        <meta property="og:image:width" content={String(ogImageWidth)} />
+        <meta property="og:image:height" content={String(ogImageHeight)} />
+        <meta property="og:image:alt" content={imageAlt} />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:site_name" content={SITE_NAME} />
+        <meta property="og:locale" content="en_US" />
 
-      {/* Twitter / X */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:url" content={currentUrl} />
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={finalDescription} />
-      <meta name="twitter:image" content={absoluteOgImage} />
-      <meta name="twitter:image:alt" content={imageAlt} />
-      <meta name="twitter:creator" content={finalTwitterHandle} />
-      <meta name="twitter:site" content={finalTwitterHandle} />
-      {readingTime && <meta name="twitter:label1" content="Reading time" />}
-      {readingTime && <meta name="twitter:data1" content={readingTime} />}
-      {category && <meta name="twitter:label2" content="Category" />}
-      {category && <meta name="twitter:data2" content={category} />}
+        {/* Twitter / X */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={currentUrl} />
+        <meta name="twitter:title" content={fullTitle} />
+        <meta name="twitter:description" content={finalDescription} />
+        <meta name="twitter:image" content={absoluteOgImage} />
+        <meta name="twitter:image:alt" content={imageAlt} />
+        <meta name="twitter:creator" content={finalTwitterHandle} />
+        <meta name="twitter:site" content={finalTwitterHandle} />
+        {readingTime && <meta name="twitter:label1" content="Reading time" />}
+        {readingTime && <meta name="twitter:data1" content={readingTime} />}
+        {category && <meta name="twitter:label2" content="Category" />}
+        {category && <meta name="twitter:data2" content={category} />}
+      </>}
+
 
       {/* Article-specific metadata */}
       {type === 'article' && publishedTime && (
