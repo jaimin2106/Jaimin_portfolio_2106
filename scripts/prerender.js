@@ -32,6 +32,7 @@ import {
   escapeHtml,
   replaceSeoBlock,
 } from '../src/data/site-seo.js';
+import { projectSeoDescription } from '../src/data/project-seo.js';
 
 const firebaseConfig = {
   projectId: "astute-abbey-p1wkv",
@@ -154,7 +155,7 @@ async function runPrerender() {
     const settingsDoc = await getDoc(doc(db, 'settings', 'global'));
     const settings = settingsDoc.data() || {};
 
-    const globalOgImage = settings.ogImage ? absoluteUrl(settings.ogImage) : FALLBACK_OG_IMAGE;
+    const globalOgImage = resolveOgImage([settings.ogImage], 'site-og.jpg');
     const settingsKeywords = settings.seoKeywords
       ? String(settings.seoKeywords).split(',').map((k) => k.trim()).filter(Boolean)
       : DEFAULT_KEYWORDS;
@@ -179,41 +180,40 @@ async function runPrerender() {
 
     // ── VALIDATION PHASE ───────────────────────────────────────────────────
     console.log('Validating SEO requirements...');
-    const slugMap = new Set();
-    let hasErrors = false;
+    const routesBySlug = new Set();
+    const validationErrors = [];
+
+    const requirePublishedContent = (item, kind) => {
+      const slug = String(item.slug || item.id || '').trim().toLowerCase();
+      const description = kind === 'project'
+        ? projectSeoDescription(item)
+        : item.seoDescription || item.shortDescription || item.description || item.excerpt || '';
+
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        validationErrors.push(`Published ${kind} has an invalid slug: ${slug || '(empty)'}.`);
+      }
+      if (routesBySlug.has(`${kind}:${slug}`)) {
+        validationErrors.push(`Duplicate published ${kind} slug: ${slug}.`);
+      }
+      routesBySlug.add(`${kind}:${slug}`);
+      if (!String(item.title || '').trim()) {
+        validationErrors.push(`Published ${kind} "${slug}" has no title.`);
+      }
+      if (String(description).replace(/<[^>]*>/g, '').trim().length < 40) {
+        validationErrors.push(`Published ${kind} "${slug}" needs a unique description of at least 40 characters.`);
+      }
+    };
 
     for (const blog of blogs) {
-      const slug = (blog.slug || blog.id).toLowerCase();
-      if (slugMap.has(slug)) {
-        console.error(`[SEO VALIDATION ERROR] Duplicate blog slug detected: ${slug}`);
-        hasErrors = true;
-      }
-      slugMap.add(slug);
-      if (!blog.title || blog.title.length < 5) {
-        console.warn(`[SEO WARNING] Blog "${slug}" has very short or missing title.`);
-      }
-      if (!blog.seoDescription && !blog.shortDescription && !blog.excerpt) {
-        console.warn(`[SEO WARNING] Blog "${slug}" is missing a description.`);
-      }
+      requirePublishedContent(blog, 'blog');
     }
 
     for (const project of projects) {
-      const slug = (project.slug || project.id).toLowerCase();
-      if (slugMap.has(slug)) {
-        console.error(`[SEO VALIDATION ERROR] Duplicate project slug detected: ${slug}`);
-        hasErrors = true;
-      }
-      slugMap.add(slug);
-      if (!project.title) {
-        console.warn(`[SEO WARNING] Project "${slug}" is missing a title.`);
-      }
-      if (!project.seoDescription && !project.shortDescription && !project.subtitle) {
-        console.warn(`[SEO WARNING] Project "${slug}" is missing a description.`);
-      }
+      requirePublishedContent(project, 'project');
     }
 
-    if (hasErrors) {
-      console.warn('Validation had errors but continuing prerender for valid pages.');
+    if (validationErrors.length) {
+      throw new Error(`SEO validation failed:\n- ${validationErrors.join('\n- ')}`);
     }
 
     // Route manifest: request path -> prerendered file inside dist/.
@@ -277,9 +277,22 @@ async function runPrerender() {
         }),
       });
 
+      const content = route.path === '/projects'
+        ? `<section aria-label="Projects"><ul>${projects.map((project) => {
+            const slug = String(project.slug || project.id).toLowerCase();
+            return `<li><a href="/projects/${escapeHtml(slug)}">${escapeHtml(project.title)}</a></li>`;
+          }).join('')}</ul></section>`
+        : route.path === '/blog'
+          ? `<section aria-label="Blog posts"><ul>${blogs.map((blog) => {
+              const slug = String(blog.slug || blog.id).toLowerCase();
+              return `<li><a href="/blog/${escapeHtml(slug)}">${escapeHtml(blog.title)}</a></li>`;
+            }).join('')}</ul></section>`
+          : '';
+
       const html = injectContent(replaceSeoBlock(baseHtml, headBlock), {
         h1: route.h1,
         description: route.description,
+        content,
         breadcrumbs,
       });
 
@@ -310,12 +323,7 @@ async function runPrerender() {
       const canonical = canonicalUrl(routePath);
 
       const pTitle = `${project.title} | Case Study`;
-      const pDesc =
-        project.seoDescription ||
-        project.shortDescription ||
-        project.subtitle ||
-        project.description ||
-        '';
+      const pDesc = projectSeoDescription(project);
 
       const pImage = resolveOgImage(
         [project.seoImage, project.ogImage, project.thumbnail, project.featuredImage, project.image],

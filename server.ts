@@ -15,6 +15,7 @@ import {
   normalizePath,
   replaceSeoBlock,
 } from "./src/data/site-seo.js";
+import { projectSeoDescription } from "./src/data/project-seo.js";
 
 const PROJECT_ID = "astute-abbey-p1wkv";
 const DATABASE_ID = "ai-studio-72db9056-9c78-47ef-8e14-18be539b546c";
@@ -141,12 +142,9 @@ async function renderDynamicRoute(
 
   const rawTitle = data.seoTitle || data.title || "Jaimin Umaraniya";
   const title = isProject ? `${rawTitle} | Case Study` : `${rawTitle} | Technical Blog`;
-  const description =
-    data.seoDescription ||
-    data.shortDescription ||
-    data.subtitle ||
-    data.excerpt ||
-    "";
+  const description = isProject
+    ? projectSeoDescription(data)
+    : data.seoDescription || data.shortDescription || data.excerpt || "";
 
   const image = safeImageUrl(
     getCanonicalOrigin(),

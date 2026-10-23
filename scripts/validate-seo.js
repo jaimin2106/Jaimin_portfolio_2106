@@ -26,6 +26,16 @@ const urls = extractAll(/<loc>([^<]+)<\/loc>/g, sitemap);
 assert.ok(urls.length > 0, "Sitemap contains no URLs.");
 assert.equal(new Set(urls).size, urls.length, "Sitemap contains duplicate URLs.");
 
+const manifestFile = path.join(DIST_DIR, "route-manifest.json");
+assert.ok(fs.existsSync(manifestFile), "dist/route-manifest.json was not generated.");
+const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+const expectedPublicRoutes = Object.keys(manifest)
+  .filter((route) => ["/", "/projects", "/blog", "/contact", "/privacy-policy", "/refund-policy"].includes(route)
+    || route.startsWith("/projects/")
+    || route.startsWith("/blog/"));
+const sitemapRoutes = urls.map((url) => url.slice(BASE_URL.length));
+assert.deepEqual([...sitemapRoutes].sort(), [...expectedPublicRoutes].sort(), "Sitemap routes must exactly match the prerendered public route manifest.");
+
 const seen = { titles: new Set(), descriptions: new Set(), canonicals: new Set() };
 const routePaths = [];
 
@@ -39,11 +49,11 @@ for (const url of urls) {
 
   const html = fs.readFileSync(file, "utf8");
   const titles = extractAll(/<title>([\s\S]*?)<\/title>/gi, html);
-  const descriptions = extractAll(/<meta\s+name="description"\s+content="([^"]*)"\s*\/?>/gi, html);
-  const canonicals = extractAll(/<link\s+rel="canonical"\s+href="([^"]+)"\s*\/?>/gi, html);
-  const robots = extractAll(/<meta\s+name="robots"\s+content="([^"]*)"\s*\/?>/gi, html);
+  const descriptions = extractAll(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/gi, html);
+  const canonicals = extractAll(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*\bhref=["']([^"']+)["'][^>]*>/gi, html);
+  const robots = extractAll(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*\bcontent=["']([^"']*)["'][^>]*>/gi, html);
   const headings = extractAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi, html);
-  const jsonLd = extractAll(/<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/gi, html);
+  const jsonLd = extractAll(/<script\b(?=[^>]*\btype=["']application\/ld\+json["'])[^>]*>([\s\S]*?)<\/script>/gi, html);
 
   assert.equal(titles.length, 1, `${route} must have exactly one title.`);
   assert.ok(titles[0].trim(), `${route} has an empty title.`);
@@ -89,9 +99,11 @@ for (const [route, indexRoute] of [
   }
 }
 
-for (const privateFile of ["admin.html", "404.html"]) {
+for (const privateFile of ["app-shell.html", "admin.html", "admin-login.html", "login.html", "style-guide.html", "seed.html", "404.html"]) {
+  assert.ok(fs.existsSync(path.join(DIST_DIR, privateFile)), `${privateFile} was not generated.`);
   const html = fs.readFileSync(path.join(DIST_DIR, privateFile), "utf8");
-  assert.match(html, /<meta\s+name="robots"\s+content="noindex,nofollow"/i, `${privateFile} must be noindex.`);
+  assert.match(html, /<meta\b(?=[^>]*\bname=["']robots["'])(?=[^>]*\bcontent=["']noindex,nofollow["'])[^>]*>/i, `${privateFile} must be noindex.`);
+  assert.doesNotMatch(html, /<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>/i, `${privateFile} must not have a canonical.`);
 }
 
 const redirects = fs.readFileSync(path.join(PUBLIC_DIR, "_redirects"), "utf8");

@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
       exit={{ opacity: 0 }}
       className="min-h-screen pt-32 pb-20 px-6 max-w-4xl mx-auto prose prose-gray prose-headings:font-display"
     >
-      <SEO title="Privacy Policy | Jaimin Umaraniya" description="Privacy policy and data handling." />
+      <SEO title="Privacy Policy | Jaimin Umaraniya" description="Learn how information submitted through Jaimin Umaraniya's portfolio website is collected, used, and stored." />
       <h1>Privacy Policy</h1>
       <p className="text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString()}</p>
       

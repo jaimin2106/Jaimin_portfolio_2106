@@ -9,7 +9,7 @@ export default function RefundPolicy() {
       exit={{ opacity: 0 }}
       className="min-h-screen pt-32 pb-20 px-6 max-w-4xl mx-auto prose prose-gray prose-headings:font-display"
     >
-      <SEO title="Refund Policy | Jaimin Umaraniya" description="Refund policy for digital services." />
+      <SEO title="Refund Policy | Jaimin Umaraniya" description="Review the refund and cancellation terms for freelance services and development projects." />
       <h1>Refund Policy</h1>
       <p className="text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString()}</p>
       

@@ -16,6 +16,7 @@ import { QUERY_KEYS, STALE_TIMES } from "../lib/queryKeys";
 import { ProgressiveImage } from "../components/ui/progressive-image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
 import { CANONICAL_ORIGIN } from "../data/site-seo.js";
+import { projectSeoDescription } from "../data/project-seo.js";
 
 const CANONICAL_DOMAIN = CANONICAL_ORIGIN;
 
@@ -177,7 +178,7 @@ export default function ProjectDetail() {
   const projectSlug = project.slug || project.id;
   const canonicalUrl = `${CANONICAL_DOMAIN}/projects/${projectSlug}`;
   const pageTitle = project.seoTitle || project.title;
-  const pageDescription = project.seoDescription || project.shortDescription || project.subtitle || project.description || "";
+  const pageDescription = projectSeoDescription(project);
   const createdAtDate = project.createdAt?.toDate?.()
     ?? (project.createdAt?.seconds
       ? new Date(project.createdAt.seconds * 1000)
